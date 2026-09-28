@@ -1,0 +1,120 @@
+\chapter{Introduction}
+\label{chap:introduction}
+
+
+\section{Inkwell Data Ltd}
+This thesis project was carried out at \textit{Inkwell Data Ltd}, a company
+% add 6 months stage for MSc Computer Science
+operating in the \textit{Industrial Internet of Things} (\textit{IIoT}) sector,
+specializing in connectivity solutions and digital-twin technologies for
+industrial assets. In this context, a digital twin is understood as a dynamic
+digital representation of a physical device and its software representation,
+continuously connected to the corresponding real-world object for data exchange
+thoughout its lifecycle.  
+Founded in 2019, with teams interconnecting London and Padua, the company
+started with \textit{Altior}, a middleware \textit{Platform as a Service}
+(\textit{PaaS}) designed to simplify the creation and management of digital
+twins at an enterprise scale.  
+
+\begin{figure}[H]
+      \centering
+      \includegraphics[alt={Logo \textit{Inkwell Data Ltd.}}, width=0.25\columnwidth]{img/inkwell_data_logo.jpeg}
+      \caption{\textit{Inkwell Data Ltd} logo}
+      \label{fig:inkwelldata}
+\end{figure}
+
+At the core of \textit{Altior}, device twin instances are treated as data
+structures reflecting the current state of the corresponding real-world object,
+allowing the platform to remain highly responsive even under heavy load. Rather
+than focusing on the mere collection of data, \textit{Altior} places particular
+emphasis on how this data flows and is processed once collected, for instance by
+publishing device updates onto message queues for downstream consumption. This
+% avoid use of instance and provide more exaples
+focus on data flow is further supported by \textit{Altior}'s distributed nature:
+% remove further supported, just say distributed logic
+the platform can be transparently replicated and clustered across multiple
+% remove transparently replicated, add horizontal and vertical section of white papers
+interconnected servers, providing horizontal scalability, load balancing and
+fault tolerance, all while maintaining a strong emphasis on security.
+
+On top of the Altior platform, Inkwell Data develops \textit{Software as a
+Service} (\textit{SaaS}) applications tailored to specific industrial
+domains. One such application is \textit{Swarm}, a product built on Altior
+and primarily focused on the water metering sector, although the company's
+technology is designed to generalize to a broader range of connected
+industrial devices.
+
+% add swarm organizations in elixir apps
+
+
+\section{Context and Motivation}
+Over the last decades, the way in which software has been thought about has go  
+
+\section{Problem Statement and Objectives}
+
+\section{Thesis Structure}
+% Completely to be remade
+This thesis is organized into seven chapters, covering the background,
+requirements, architecture, implementation, and evaluation of DEX.
+
+\begin{description}
+      \item[\textbf{Chapter 2}] provides the background required to understand
+      the project. It introduces data exploration, distributed data systems,
+      heterogeneous data sources, data abstraction and governance, and
+      distributed query processing. The chapter concludes with an overview of
+      existing solutions and technologies related to the presented problem.
+      \item[\textbf{Chapter 3}] describes the requirements and design goals of
+      DEX. It defines the functional requirements, quality requirements, and
+      constraints that guided the development of the system.
+      \item[\textbf{Chapter 4}] presents the architecture of DEX. It first
+      provides an overview of the system and its main architectural principles,
+      and then describes its adoption of the Hexagonal Architecture. The chapter
+      also discusses distributed execution, fault tolerance, and the application
+      of microservice principles within the BEAM environment.
+      \item[\textbf{Chapter 5}] describes the implementation of DEX. It
+      introduces the main technologies adopted by the system and details the
+      implementation of query processing, data source integration, persistence,
+      configuration, and client interaction. The chapter also discusses the
+      concrete mechanisms used to provide fault tolerance.
+      \item[\textbf{Chapter 6}] evaluates the developed system. It describes the
+      experimental setup and presents the results of the performance and
+      scalability evaluations. The obtained results are subsequently discussed
+      to assess the behavior of DEX under the considered experimental
+      conditions.
+      \item[\textbf{Chapter 7}] concludes the thesis by summarizing the main
+      contributions of the project and discussing its current limitations. The
+      chapter concludes by presenting possible directions for future
+      development.
+
+% In merito alla stesura del testo, all'interno del presente documento sono state adottate le seguenti convenzioni tipografiche:
+% \begin{itemize}
+%       \item gli acronimi, le abbreviazioni e i termini ambigui o di uso non comune menzionati vengono definiti nel glossario;
+%       \item per la prima occorrenza dei termini riportati nel glossario viene utilizzata la seguente nomenclatura: \textit{parola}\glox\gloxspacing;
+%       \item i termini facenti parti del gergo tecnico sono evidenziati con il carattere \textit{corsivo}.
+% \end{itemize}
+\end{description}
+
+% \section{Organizzazione del testo}
+% Nel presente capitolo viene presentata l'introduzione della tesi, fornendo una panoramica sull'azienda, sul contesto applicativo,
+% sul progetto, sugli strumenti utilizzati e sul prodotto portato a termine durante lo svolgimento dello stage. \newline
+% In seguito il documento presenterà la seguente organizzazione:
+
+% \begin{description}
+%       \item Il {\hyperref[chap:analisi-requisiti]{Capitolo 2}} descrive la fase di analisi dei requisiti che è stata
+%             svolta dall'azienda in fase antecedente all'inizio dell'attività di stage, in modo da permettere una comprensione più profonda
+%             di quelle che sono le necessità da soddisfare e gli obiettivi da raggiungere all'interno di questo progetto;
+
+%       \item Il {\hyperref[chap:progettazione]{Capitolo 3}} illustra l'attività di progettazione che è stata svolta in vista dell'implementazione
+%             dei grafici prodotti, definendo e individuando le soluzioni implementative che sono state attuate durante la successiva attività di codifica;
+
+%       \item Il {\hyperref[chap:realizzazione-testing]{Capitolo 4}} approfondisce l'attività di codifica delle componenti grafiche presentate
+%             all'interno della libreria implementata e dei relativi test effettuati per garantire la qualità e la funzionalità del prodotto finale;
+
+%       \item Il {\hyperref[chap:rilascio]{Capitolo 5}} descrive l'attività di rilascio dell'SDK realizzato, presentando le modalità di integrazione
+%             all'interno di un prodotto \textit{Datasoil S.r.l.};
+
+%       \item Il {\hyperref[chap:conclusioni]{Capitolo 6}} presenta un epilogo del progetto svolto, includendo un consuntivo finale delle attività svolte,
+%             una valutazione del progetto e una sezione dedicata ai possibili sviluppi futuri del prodotto.
+%             La sezione infine si conclude con una riflessione finale sull'esperienza di stage svolta.
+% \end{description}
+
