@@ -1,6 +1,5 @@
-This thesis presents the internship experience carried out at Inkwell Data Ltd
-over a period of six months, focusing on the design and development of DEX, an
-Elixir-based framework for data exploration across heterogeneous data sources.
+This thesis presents  the design and development of DEX, an
+Elixir-based framework for Data EXploration across heterogeneous data sources.
 
 The project involved the development of a configurable and distributed framework
 capable of integrating different databases and Elixir applications through a
@@ -25,3 +24,4 @@ storage mechanisms. This separation enables organizations to provide data
 exploration capabilities while retaining control over how their data is
 structured and exposed.
 
+This work was carried out during a six-month internship at Inkwell Data Ltd.
