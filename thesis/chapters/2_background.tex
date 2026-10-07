@@ -1,0 +1,418 @@
+\chapter{Background}
+\label{chap:background}
+
+\section{Data Exploration}
+\textit{Data Exploration} can be defined as the process through which users
+formulate information needs over a dataset even when they do not know exactly
+what they were looking for, involving the act of investingating among data,
+often realizing that something is interesting only after finding it. Typically,
+an exploration session includes several queries, where the result of each one
+triggers the formulation of the next one, uncovering unkown or unanticipated
+insights in the data, letting information that is needed to emerge and evolve
+itself rather than being fully known in advance.  
+
+As stated in \cite{idreos2015overview}, traditional data management systems
+assume that users, when posing a query, have a good knowledge of the data schema
+and that the query they provide leads to a result that is actually what they
+wanted, presupposing that the end user already knows what they are looking for.
+These assumptions are strong: not only they require the user to have a precise
+understanding of the schema and semantics of the underlying data, but they
+also presuppose that the user has the technical expertise needed to express
+even complex queries. Moreover, distributed and heterogeneous data sources
+aggravate this situation even further. On one hand, they increase the cognitive
+load required of the user, who needs to know not only which data is available,
+but also where it resides, a difficulty that becomes even more problematic in
+data exploration processes, where we may potentially not know in advance what
+information we are looking for. On the other hand, they increase the technical
+competencies required to access the data itself, as different sources may expose
+different query languages and technologies, such as SQL and NoSQL, each
+requiring its own specific expertise simply to access the data at all.
+
+In organizational contexts, however, restricting data exploration just to
+personnel used to those query technologies can be a limitation which may exclude
+domain experts who, despite lacking a technical background, may hold knowledge
+that is highly relevant to bringing value to the work being carried out. For
+these users, the requirement to master query technologies becomes an obstacle
+not only to data exploration, but more broadly to any attempt to consult
+data that is not made available to them or not in the form they would need by
+the services provided to them. This situation is commonly addressed in practice
+through mediation: whenever a custom, ad-hoc query is required, who needs those
+data must rely on the company or department responsible for the software product
+to implement it on their behalf. 
+
+This solution, however, requires a certain amount of effort, especially in
+organizations where data is distributed across different services owned by
+different teams, a common situation in companies that adopt microservice
+architecture, adding a coordination effort on top. This process becomes
+increasingly costly, not only for the labor required from technical personnel,
+but also because it imposes a considerable maintenance burden on development teams,
+repeatedly involved in implementing one-off queries that fall outside the
+scope of the system's predefined interfaces, diverting development time away
+from work that would otherwise be more valuable to the system.
+An even more critical consequence, however, concerns timing: this mediation
+process introduces significant latency between the formulation of an
+information need and its fulfillment, a delay that is particularly
+degrading to data exploration. A further factor central to data exploration
+is, in fact, interactive time: the delay between the formulation of an
+information need and the availability of an answer, or at least a partial
+one, sufficient to provide the user with enough context to formulate their
+next request. This responsiveness is crucial, as the data exploration process
+must remain interactive enough to keep the user engaged and avoid breaking
+their train of thought. Distribution, in this regard, introduces additinal
+latency, arising not only from the need for different nodes to communicate with
+one another, but also from the fact that additional work is required to
+coordinate the execution across the distributed environment and to reconcile the
+partial results into a single answer. This complexity is unavoidable if we want
+to enable a data exploration process that remains as transparent as possible
+with respect to how the system is actually structured, a distinction that is
+fundamental to support data exploration beyond the problem of data fragmentation
+in today's distributed systems, particularly within microservices architectures.
+
+Given the issues discussed in this section, this thesis aims to address
+them through the design of \textit{DEX}, guided by a set of concrete objectives.\\
+First, \textit{DEX} seeks to abstract users from the schema of the underlying data
+sources and from the knowledge of which specific data source a given piece of data
+originates from, information which is not relevant to someone engaged in data
+exploration and is primarily interested in the data itself rather than in
+how or where it is stored. What matters to the user is the data and its meaning,
+not whether it is stored in a relational, document-oriented, key-value, graph,
+or any other type of data store. \textit{DEX}'s second objective is to prevent
+users from the requirement of being proficient in the specific query technology
+adopted by each data source, regardless of whether it exposes a structured query
+language, such as \textit{SQL} or a \textit{NoSQL} query language, or a
+different access paradigm, such as the APIs typically exposed by key-value
+stores. Third, \textit{DEX} aims to relieve users from the effort required to
+aggregate data retrieved from potentially different sources, providing them
+instead with a single, unified response: if this aggregation effort were
+left to the user performing the data exploration, it would become a
+significant burden, hindering an effective exploration process. \\
+Given the centrality of interactive time in data exploration to enable a fluid
+user experience, \textit{DEX} further strives to return a valuable response as
+quickly as possible, even if the response is temporarily incomplete, providing
+users with feedback that can inform and facilitate their exploration process
+toward their final objective. \\ 
+Taken together, these aims amount to abstracting the user from the complexity
+introduced in distributed systems, while also removing when possible the need
+for mediation with a technical team, freeing them to focus on work of greater
+value to the system and avoiding the intrinsic latency of that mediation
+process. When such mediation cannot be entirely avoided, these aims are
+nonetheless pursued through a design that keeps the framework easily
+maintainable and extensible, able to accommodate new data sources, new
+technologies, and changes to the data made available for exploration.
+This design is further guided by the goal of keeping the cognitive load imposed
+on the user low, allowing data to be discovered, understood, and related to
+other data with ease. \\
+The overall goal of \textit{DEX} is therefore to facilitate data exploration,
+all that while trying to remain efficient in terms of both system load and query
+performance, making organization's data more broadly accessible to those who can 
+leverage it to bring value.
+
+
+
+
+
+
+
+\section{Microservices in Elixir}
+% dico che le principali sono
+The adoption of distributed architectures has been driven by a combination of
+needs: the ability to scale to sustain growning workloads, fault tolerance in
+the presence of hardware and/or software failures, and, with software products
+increasingly reaching a global rathen than local user base, the ability to serve
+geographically dispersed requests with acceptable response times. \\
+A single server running a monolithic application, with all components,
+business logic, and data access layers residing within a single process, is
+unable to satisfy these needs beyond a certain scale. Any concurrency it is
+able to offer remains bounded by the capacity of that single machine, which
+constitutes both a bottleneck and a single point of failure, potentially
+compromising the availability of the entire system. Moreover, being tied to a
+fixed physical location, it is unable to satisfy strict latency requirements
+for all users.\\
+In this context, sustaining higher workloads required to scale vertically, by
+adding more powerful or additional components. As one might assume, this
+infrastructure approach tends to incur into costs which grow exponentially in
+relation to the amount of work that the system is able to support, making it an
+unsustainable choice for lage-scale data and user applications.\\
+
+The natural step was to scale horizzontally, distributing the workloads across
+multiple, independent and typically less expensive machines rather than
+concentrating it on a single, powerful and costly one. However, just replicating
+a monolithic application across several nodes, doesnn't solve all the previous
+problems: a software or hardare failure will potentially cause sessions or
+application state issues. Different monoliths will still point to the same
+database: which is a single point of failure and a performance bottleneck.
+Moreover, application logic components are replicated equally, even if they
+might require different scalability dynamics, leading to an unefficient use of
+the available resources
+
+
+
+
+
+% aggiungo menzione al reactive manifesto
+% i microservizi sono reactive systems se seguono i princi del reactive manifesto
+
+
+% menziono nascita di erlang, molto prima di microservizi, ma nasce col portare
+% quelli che sono i principi che poi di fatto sono stati tradotti nei microservices
+
+The microservices architectural style can be characterized along four
+dimensions of isolation that loosely coupled, independently deployable
+services aim to achieve. \textit{Isolation of state} is ensured by each
+microservice owning and managing its own data, with no shared, mutable state
+accessible to other services. \textit{Isolation of space} follows from
+services being physically separable and independently deployable, allowing
+each one to be scaled on its own, potentially running one or more instances
+across different machines. \textit{Isolation of time}, together with
+\textit{isolation of failure}, stems from communication between services
+typically being asynchronous, decoupling the lifecycle of a request from the
+availability of the services involved, and from failures being contained
+within the boundaries of the service in which they occur, increasing the
+overall availability of the system.
+
+Interestingly, these same four dimensions of isolation are not exclusive to
+the microservices architectural style, but are core design principles of the
+Erlang/Elixir concurrency model, predating the popularization of
+microservices by several decades. In Elixir, \textit{isolation of state} is
+achieved at the level of applications, independent units, often organized
+within an \textit{umbrella project}, each encapsulating its own
+functionality with no shared, mutable state with the others. \textit{Isolation
+of space} is reflected in the ability of these applications to be started
+and stopped as independent units, and, within a clustered deployment,
+distributed across different nodes. \textit{Isolation of time and failure}
+is realized at a finer grain, at the level of individual processes: Elixir
+processes are lightweight, isolated units of computation that communicate
+exclusively through asynchronous message passing, sharing no memory with one
+another, and can be supervised and automatically restarted upon failure,
+containing faults within the boundaries of the process in which they occur
+without compromising the rest of the system.
+
+This correspondence is not incidental: the Erlang Virtual Machine (the
+\textit{BEAM}) was designed around the actor model, in which independent,
+isolated processes communicate asynchronously via message passing under
+\textit{location transparency}, meaning that a process can communicate with
+another regardless of whether it resides on the same node or a different one
+in the cluster. Designing a system around a set of small, isolated,
+distributed processes is therefore, in essence, designing it according to
+the same principles that underlie a microservices architecture, applied at
+the granularity of a lightweight process rather than that of an independently
+deployed service.
+
+This correspondence allows an Elixir application to realize the isolation
+properties pursued by microservices, while avoiding much of the operational
+complexity that a microservices architecture typically introduces, such as
+the communication overhead imposed by inter-service APIs and network
+protocols, the need to maintain multiple independent deployment pipelines,
+and the orchestration and observability overhead of coordinating a large
+number of independently deployed services. An Elixir application can
+therefore be deployed with the operational simplicity of a monolith, while
+retaining the isolation of state, space, time, and failure that make
+microservices a desirable architectural choice.
+
+
+
+
+
+
+
+
+\section{Heterogeneous Data Sources}
+A \textit{distributed data system} is one in which data is stored and managed
+across multiple, physically or logically separated nodes, rather than residing
+within a single centralized repository. This design choice is motivated by a
+range of benefits that a centralized system cannot offer at scale: horizontal
+scalability, as additional nodes can be provisioned to absorb growth in data
+volume or load, rather than relying on the vertical scaling of a single
+machine; and fault tolerance, as replicating data across multiple nodes
+allows the system to continue operating, at least partially, even when
+individual nodes fail.
+
+Systems such as Riak or Cassandra embody this model, distributing data across
+a cluster of nodes while exposing a single, unified query interface to the
+client. The complexity of partitioning, replication, and coordination among
+nodes is entirely managed internally by the system and hidden behind this
+abstraction: from the perspective of the application consuming the data, the
+underlying distribution is transparent, and the system behaves, for all
+practical purposes, as a single logical data source.
+
+This transparency, however, does not extend to the kind of distribution
+introduced by microservices architectures. As discussed in the previous
+section, the \textit{database per service} pattern results in an
+application's data being partitioned not across the nodes of a single,
+internally coordinated system, but across multiple, independent data sources,
+each owned by a different service and potentially adopting a different data
+model, query language, and storage technology. Unlike the node-level
+distribution of systems such as Riak, there is no unifying layer
+reconciling these differences: each data source exposes its own interface,
+and no common abstraction exists for querying across them. This
+\textit{heterogeneity} directly undermines the ability to obtain a unified,
+cross-cutting view of an application's data, as a query spanning multiple
+services cannot be expressed as a single operation, but must instead be
+decomposed into subqueries tailored to each individual data source, with the
+corresponding partial results reconciled into a coherent answer.
+
+DEX is designed to address precisely this gap. In the same way that systems
+such as Riak and Cassandra provide an abstraction over the distribution of
+data across nodes, DEX aims to provide an analogous abstraction over the
+distribution of data across heterogeneous, independently managed data
+sources, allowing users to query an application's data as a unified whole,
+regardless of the underlying technologies adopted by each individual service.
+% <!-- Not only distributed, but potentially different technologies to suite specific 
+% requirements. -->
+
+% add refernece to riak for trasaprrency
+
+\section{Data Abstraction and Governance}
+While the technical challenges of querying heterogeneous, distributed data
+sources are substantial, as discussed in the previous sections, an equally
+important dimension of the problem concerns \textit{who} is allowed to
+access \textit{what} data, and \textit{how} that access is mediated. A
+technically proficient user, granted direct access to the underlying data
+sources, may be able to navigate their heterogeneity and formulate the
+necessary subqueries manually. However, granting such direct, unmediated
+access to every user is rarely a viable option, both because, as previously
+discussed, most end users lack the technical expertise required, and because
+direct access to raw data sources bypasses any control over which data is
+exposed, to whom, and under which conditions.
+
+This concern falls under the umbrella of \textit{data governance}, the set of
+practices, policies, and processes through which an organization ensures
+that its data is accurate, consistent, secure, and used in compliance with
+internal policies and external regulations. Data governance has become
+increasingly central to organizations in recent years, driven by two
+converging trends. First, data has become a primary source of value for most
+modern companies, which increasingly rely on it not only to support
+operational decisions, but also to train machine learning and artificial
+intelligence models, whose effectiveness is directly tied to the quality and
+accessibility of the data they are exposed to. Second, as systems grow in
+scale and interconnection, for instance in domains such as smart cities and
+large-scale \textit{Internet of Things} deployments, the number of parties
+that may need to query a subset of an organization's data, internal teams,
+partner organizations, or automated systems, grows accordingly, amplifying
+the risk associated with uncontrolled data access.
+
+An abstraction layer that mediates access to heterogeneous data sources, such
+as the one pursued by federated query processing, offers a natural point at
+which governance policies can be enforced. Rather than relying on each
+individual data source to independently implement and maintain its own
+access control logic, a unified query interface allows such policies to be
+defined and enforced centrally, consistently across all underlying sources.
+This has two main advantages. First, it enables \textit{schema-agnostic}
+access control: policies can be expressed in terms of logical entities and
+fields exposed by the abstraction layer, independently of how each
+underlying data source physically stores or structures that data, making
+governance policies easier to define, reason about, and maintain as the
+underlying sources evolve. Second, it reduces the risk of unintended data
+\textit{leakage}: since users and applications interact exclusively with the
+abstraction layer, rather than with the underlying data sources directly, the
+scope of what can be accessed, and under which conditions, is constrained to
+what the abstraction layer explicitly exposes, rather than being implicitly
+determined by the, often broader, access permissions of each individual data
+source.
+% <!-- Tech people okay, but non tech? 
+% Data governance, especially today with AI and increasingly smart city etc, is a more relavant
+% value comes from data for a lot of companies. 
+% + agostic schema query advantages / avoid leakeages-->
+
+\section{Federated Query Processing}
+As discussed in the previous section, the fragmentation of an application's
+data across multiple, independently managed, and heterogeneous data sources
+prevents a query from being expressed as a single operation against a
+centralized data store. Satisfying an information need that spans several
+data sources requires instead a different approach: the original query must
+be decomposed into a set of subqueries, each executable against the specific
+data source it targets, and the partial results subsequently combined into a
+single, coherent answer. This process is generally referred to as
+\textit{federated query processing}~\cite{}.
+
+A federated query processing engine typically operates in four stages. First,
+during \textit{query parsing}, the user's query is translated into an internal
+representation suitable for further processing. Second, during \textit{data
+source selection}, the engine determines which of the available data sources
+are relevant to the query, based on the schema or capabilities exposed by
+each source. Third, during \textit{query optimization}, the engine produces
+an execution plan that decomposes the original query into subqueries, and
+determines the order and strategy with which they should be executed and
+combined, typically aiming to minimize execution time while maximizing the
+completeness of the final result. Finally, during \textit{query execution},
+the subqueries are dispatched to their respective data sources, and the
+corresponding partial results are collected and aggregated into the response
+returned to the user~\cite{}.
+
+This decomposition-and-aggregation process introduces challenges that are not
+present when querying a single, centralized data source. Data sources
+participating in a federation may expose heterogeneous query capabilities:
+some may support complex filtering, joins, or aggregations natively, while
+others may only allow simple lookups, constraining the extent to which a
+subquery can be pushed down to the source itself rather than resolved by the
+federation engine. Moreover, combining partial results originating from
+different sources requires reconciling their data models and schemas into a
+common representation, a step that is non-trivial in the presence of
+heterogeneous sources, as previously discussed. Finally, the federation
+engine must account for the fact that different sources may exhibit different
+latencies and failure modes, requiring the overall query execution strategy
+to remain robust even when one or more sources are slow or temporarily
+unavailable.
+
+Despite originating primarily in the context of querying linked and
+semantic web data, these principles generalize naturally to the problem
+addressed in this thesis: querying data fragmented across the independent
+services of a microservices architecture. In both cases, the core challenge
+is the same, enabling a single logical query to be answered by orchestrating
+multiple autonomous, heterogeneous data sources, without requiring the user
+to be aware of how or where the underlying data is actually stored.
+
+\section{Existing Solutions}
+To the best of our knowledge, no existing solution directly addresses the
+problem of providing both schema-agnostic query abstraction and centralized
+data governance over heterogeneous data sources belonging to independent
+microservices, making our approach novel in this specific combination. Several
+existing tools, however, address parts of this problem space, and are worth
+discussing to better position our contribution.
+
+\textit{Metabase} is perhaps the closest point of comparison. It exposes the
+schemas of connected databases to end users, allowing them to interact with
+their data through a \textit{no-code} interface, without explicitly writing
+query code. However, Metabase operates directly on top of the exposed
+database schemas, rather than introducing an additional abstraction layer
+over them. This limits its applicability in two ways relevant to this thesis:
+it does not decouple the user-facing query model from the physical schema of
+each underlying source, and it does not natively support the kind of
+cross-source query decomposition and reconciliation required by federated
+query processing, as it is primarily designed to query one connected data
+source at a time.
+
+\textit{Data virtualization} platforms, such as \textit{Denodo} and
+\textit{Dremio}, are closer in spirit to the architectural goal of this
+thesis, as they explicitly introduce an abstraction layer over multiple,
+heterogeneous data sources, exposing a unified logical schema and supporting
+query federation across them. These platforms, however, are primarily
+designed for enterprise data integration and analytics scenarios, targeting
+technical users such as data engineers and analysts through SQL-based
+interfaces, rather than being designed to also serve non-technical, domain
+expert end users through a higher-level, schema-agnostic query abstraction.
+
+Distributed SQL query engines, such as \textit{Trino} (formerly
+\textit{PrestoSQL}), similarly allow a single SQL query to be executed across
+multiple, heterogeneous data sources through dedicated connectors. While
+effective at the query decomposition and execution level, these engines
+expose the native schema and SQL interface of the underlying sources
+directly, again requiring technical expertise from the end user, and do not
+inherently address the data governance concerns discussed previously.
+
+Finally, in the context of \textit{GraphQL}, federation frameworks such as
+\textit{Apollo Federation} and \textit{Hasura} pursue a goal conceptually
+close to ours: composing a single, unified API schema out of multiple,
+independently owned services. However, these frameworks operate at the API
+composition level, requiring each underlying service to expose a
+GraphQL-compatible interface and to explicitly participate in the federation
+by defining how its schema relates to the others, rather than providing a
+generic abstraction capable of integrating arbitrary, heterogeneous data
+sources with minimal reconfiguration.
+
+Across all these solutions, the combination of goals pursued by this thesis,
+a schema-agnostic abstraction over heterogeneous data sources, usable by
+non-technical end users, and serving as a natural enforcement point for data
+governance policies, is not addressed as a whole by any single existing
+tool, positioning our framework as an original contribution to this problem
+space.

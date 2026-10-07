@@ -4,4 +4,5 @@
 <br>
 
 ## Stage
-Documentation related to an internship undertaken during the Computer Science study program at the University of Padua, carried out at Inkwell Data Ltd.
+Documentation related to an internship undertaken during the Computer Science
+study program at the University of Padua, carried out at Inkwell Data Ltd. 
