@@ -1,5 +1,5 @@
-\blankpage
-\cleardoublepage
+\blankpage{}
+\cleardoublepage{}
 \pdfbookmark{\contentsname}{tableofcontents}
 \setcounter{secnumdepth}{5}
 \setcounter{tocdepth}{5}
@@ -7,28 +7,28 @@
 \tableofcontents
 \clearpage
 
-\begingroup
+\begingroup{}
 \let\clearpage\relax
 \let\cleardoublepage\relax
 \let\cleardoublepage\relax
 
 % Figures list
-\phantomsection
+\phantomsection{}
 \pdfbookmark{\listfigurename}{lof}
 \listoffigures
 \vspace*{8ex}
 
 % Tables list
-\phantomsection
+\phantomsection{}
 \pdfbookmark{\listtablename}{lot}
-\listoftables
+\listoftables{}
 \endgroup
 
 \begingroup
 % Code list
-\phantomsection
+\phantomsection{}
 \pdfbookmark{\listoflistingscaption}{lol}
-\listoflistings
+\listoflistings{}
 \endgroup
 
-\cleardoublepage
+\cleardoublepage{}

@@ -173,22 +173,22 @@ without altering its logical meaning, can be absorbed by updating the mapping
 between the two levels, leaving the queries expressed by users unaffected.
 
 In addition, since end users are not required to navigate the data sources
-directly, \textit{DEX} becomes the only point of access to the data. This
-position makes it possible to exercise control over the data, which would
-otherwise be bypassed by direct access to the sources. Every query is mediated
-by \textit{DEX}, which can evaluate it against the access policies defined by
-the organization before any data is retrieved, and return only what the user is 
-entitled to see. Indeed, as systems grow in scale and interconnection, for
-instance in domains such as smart cities and large-scale \textit{Internet of
-Things} deployments, the number of parties that may need to query a subset of an
-organization's data, internal teams, partner organizations, or automated
-systems, grows accordingly, amplifying the risk associated with uncontrolled
-data access. With \textit{DEX}, such policies can be defined once, at the level
-of the abstraction exposed to users, and apply uniformly to all the underlying data
-sources, regardless of how each of them manages its own permissions. Governance
-thus becomes a property of the access path, rather than a responsibility
-distributed across every individual source, supporting compliance with both
-internal policies and external regulations.
+directly, \textit{DEX} acts as a \textit{middleware} between users and the
+underlying services. This position makes it possible to exercise control over
+the data, which would otherwise be bypassed by direct access to the sources.
+Every query is mediated by \textit{DEX}, which can evaluate it against the
+access policies defined by the organization before any data is retrieved, and
+return only what the user is entitled to see. Indeed, as systems grow in scale
+and interconnection, for instance in domains such as smart cities and
+large-scale \textit{Internet of Things} deployments, the number of parties that
+may need to query a subset of an organization's data, internal teams, partner
+organizations, or automated systems, grows accordingly, amplifying the risk
+associated with uncontrolled data access. With \textit{DEX}, such policies can
+be defined once, at the level of the abstraction exposed to users, and apply
+uniformly to all the underlying data sources, regardless of how each of them
+manages its own permissions. Governance thus becomes a property of the access
+path, rather than a responsibility distributed across every individual source,
+supporting compliance with both internal policies and external regulations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -395,3 +395,81 @@ The overall goal of \textit{DEX} is therefore to facilitate data exploration,
 all that while trying to remain efficient in terms of both system load and query
 performance, making organization's data more broadly accessible to those who can 
 leverage it to bring value.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Existing Solutions}
+To the best of our knowledge, no existing solution directly addresses the
+problem of providing both schema-agnostic query abstraction and centralized
+data governance over heterogeneous data sources belonging to independent
+microservices, making our approach novel in this specific combination. Several
+existing tools, however, address parts of this problem space, and are worth
+discussing to better position our contribution.
+
+\textit{jQuery QueryBuilder} is a client-side plugin that allows users to
+build queries visually and export them in several formats. Its query model is
+based on a logic of filters combined through \textit{AND}/\textit{OR}
+conditions, an idea that was adopted in our framework and extended: instead of
+stopping at filters, \textit{DEX} introduces the concept of \textit{Object}
+and of relations between objects, making it possible to express queries that
+span multiple entities. Moreover, \textit{jQuery QueryBuilder} reproposes the
+schema of the underlying database to the user, rather than providing a further
+layer of abstraction over it, as done in \textit{DEX}. Finally, it is only a
+query construction tool and offers no engine for executing the queries it
+produces.
+
+\textit{Visual Query Builder} and \textit{WeaveBird} offer an interesting visual
+representation of queries, based on flows of connected diagrams in which the
+filters are linked to one another. This representation was partially adopted in
+\textit{DEX} to convey the logical flow in which filters are chained.
+However, in these tools the filters are evaluated one after the other simply as
+\textit{AND} conditions, without the possibility of expressing \textit{OR}
+conditions, which is instead supported in \textit{DEX}.
+
+\textit{Item Query} is a framework that allows users to run successive queries
+on previously obtained results, applying further filters to progressively
+refine them. This idea was adopted in \textit{DEX}, since it is well suited to
+\textit{data exploration}: users rarely know in advance exactly which data they
+need, and tend to approach it iteratively, starting from a broad question and
+narrowing it down as they inspect intermediate results. Reusing a previous
+result as the starting point of a new query allows this process to proceed
+incrementally, without having to rewrite the whole query from scratch at every
+step, and lets users build their understanding of the data step by step.
+
+Among the tools considered, \textit{Metabase} and \textit{FedX}
+\cite{schwarte2011fedx} are the closest point of comparison. 
+\textit{Metabase} exposes the schemas of connected databases to end users, allowing
+them to interact with their data through a \textit{no-code} interface, without
+explicitly writing query code. However, \textit{Metabase} operates directly on
+top of the exposed database schemas, rather than introducing an additional
+abstraction layer over them. This limits its applicability in two ways relevant
+to this thesis: it does not decouple the user-facing query model from the
+physical schema of each underlying source, and it does not natively support the
+kind of cross-source query decomposition and reconciliation required by federated
+query processing, as it is primarily designed to query one connected data
+source at a time.
+
+Regarding \textit{FedX}, it comes as a federated query processing tool: a query
+is decomposed into subqueries, which are dispatched to the relevant data sources
+and whose partial results are then combined into a single answer. As with
+\textit{DEX}, it recognize that the cost of this process is largely determined
+by the amount of intermediate data shipped to the aggregating component, and
+that joins performed there are expensive, leading to the introduction of
+optimizations that are reproposed in \textit{DEX}, such as \textit{exclusive
+groups}. However, important differences arises concearning the context of the
+our framework and \textit{FedX}: \textit{FedX} targets \textit{Linked Data},
+where every source exposes an RDF dataset through a \textit{SPARQL} endpoint:
+the sources share the same data model and query language, so heterogeneity is
+largely absent at this level, and users are expected to write \textit{SPARQL}
+queries directly against the vocabularies of the sources. \textit{DEX}, instead,
+operates on sources that differ in data model, query language, and storage
+technology, belonging to independent microservices. Furthermore, \textit{DEX}
+introduces an abstraction layer, based on \textit{Objects} and on the relations
+between them, as previously mentioned for \textit{Metabase}.
+
+Across all these solutions, the combination of goals pursued by this thesis,
+a schema-agnostic abstraction over heterogeneous data sources, usable by
+non-technical end users and serving as a natural enforcement point for data
+governance policies, is not addressed as a whole by any single existing
+tool, positioning our framework as an original contribution to this problem
+space.
