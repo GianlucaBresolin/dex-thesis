@@ -1,8 +1,6 @@
-\chapter{Background}
-\label{chap:background}
+\chapter{Background}\label{chap:background}
 
-\section{Heterogeneous Data Sources}
-\label{sec:heterogeneous-data-sources}
+\section{Heterogeneous Data Sources}\label{sec:heterogeneous-data-sources}
 An increasing number of modern software systems rely on \textit{distributed
 database systems}, which can be defined as an integration of autonomous local
 databases that are geographically distributed and interconnected by a network,
@@ -194,6 +192,104 @@ internal policies and external regulations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\section{Federated Query Processing}
+\textit{Federated query processing} is the technique through which a single
+query, formulated over a set of autonomous and heterogeneous data sources, is
+executed by decomposing it into subqueries, running them independently of one
+another and aggregating their partial results into a single response.
+The technique makes no assumption on where the subqueries are executed: they may 
+run at the data sources themselves or at the processing engine, and, being
+independent, they can be carried out in a distributed and parallel fashion.
+
+The fragmentation of data across multiple and independently managed data sources
+prevents a query from being expressed as a single operation against a
+centralized data store. Two main strategies can be adopted to overcome this
+limitation. The first consists in integrating the relevant data into a local,
+centralized warehouse and processing queries against this copy: here the data is
+moved to the query. The second, known as federated query processing, takes the
+opposite direction: rather than moving the data to the query, it brings the
+query to the data, leaving information in the sources that own it and decomposing
+each query into subqueries executed directly at the source sites.
+
+The warehouse approach can be suboptimal for several reasons. First, it
+requires copying data, which introduces storage costs and a replica that must
+be kept aligned with the sources. Since the copy is refreshed periodically,
+queries may be answered with stale data, which is undesirable when the
+information need depends on the current state of the system. Second, it
+requires designing and maintaining the pipelines that extract, transform, and
+load the data, together with an integrated schema defined in advance. This
+effort grows with the number of sources, and must be repeated whenever a
+source changes. Third, it removes the data from the control of the service
+that owns it, moving it outside the boundaries in which access policies were
+defined and creating a further copy to be protected. Finally, it is poorly
+suited to exploratory scenarios, where the data of interest is not known in
+advance: integrating everything beforehand is costly, while integrating only
+what is needed requires knowing it beforehand.
+
+Conversely, federated query processing addresses these limitations by leaving
+the data where it is. Since no copy is made, queries are evaluated against the
+current state of the sources, so the answers are always fresh and no replica has
+to be stored or kept aligned. Moreover, the effort required to integrate a new
+source is reduced: instead of building and maintaining extraction,
+transformation, and loading pipelines, it is sufficient to describe how the
+source maps onto the logical model exposed to the users. This also makes the
+approach more robust to change, as a modification of a source affects only the
+description of that source rather than the whole integration process. Regarding
+access policies, the data remains under the control of the service that owns it,
+which continues to enforce its own policies, without additional copies who may
+need to be protected. Finally, the approach is well suited to exploratory
+scenarios: since nothing has to be integrated beforehand, any source can be
+queried as soon as it is made available, and only the data actually requested is
+accessed. A further advantage is that independent subqueries can be executed in
+parallel, each by the most appropriate engine for its source, exploiting the
+capabilities of the underlying systems, something which is valuable in the
+presence of heterogeneous data sources. Indeed, each subquery can exploit the
+characteristics for which the underlying technology was originally chosen,
+preserving the benefits that resides behind those architectural decisions. \\
+These advantages come with trade-offs, which the design of a federated system
+must take into account. Query performance depends on the responsiveness of the
+individual sources and on the cost of transferring partial results, in addition
+to the fact that the availability of an answer depends on the availability of
+every source involved.
+
+Federated query processing typically proceeds in five stages. First, during
+\textit{query parsing}, the user's query is translated into an internal
+representation suitable for further processing. Second, during
+\textit{query optimization}, the plan that decomposes the original query into
+subqueries is produced, together with the strategy with which they
+should be executed and combined, typically aiming to minimize execution times
+and requests while maximizing the completeness of the final result. Third, during
+\textit{data source selection}, the data sources relevant to the query are
+identified, based on the schema or capabilities exposed by each source.
+Fourth, during \textit{query execution}, the subqueries are dispatched to
+their respective data sources and the corresponding partial results are
+collected. Finally, during \textit{result aggregation}, these partial results
+are combined into a single response, which is finally returned to the user.
+
+However, regarding \textit{query optimization} in the execution of a federated
+query, is not merely a matter of dispatching subqueries and combining their
+results. A naive decomposition treats each subquery in isolation, so that
+filters and constraints that are meaningful for the query as a whole may be
+retained in some subqueries and omitted from others. The partial results
+returned by the sources are then larger than necessary, and contain a
+considerable amount of data that is irrelevant to the final answer, which must
+be transferred over the network and subsequently discarded during result
+aggregation. As a consequence, a significant share of the computation is
+deferred to the aggregation phase, where joins performed over large intermediate
+results become particularly costly, both in execution times and memory
+consumptions. For this reason, as pointed out in the \textit{FedX} study
+~\cite{schwarte2011fedx}, optimization techniques are needed to reduce the number
+of intermediate requests and the amount of data shipped from the sources, while
+still guaranteeing fast execution of the individual requests. In this direction,
+a possible solution consists in enriching the subqueries with additional filters
+that reduce the size of partial results at the source, thereby anticipating part
+of the work that would otherwise be carried out by the joins during final
+aggregation. A similar concern motivates the \textit{exclusive 
+groups} proposed in \textit{FedX}, which are introduced precisely because
+performing joins at the aggregating server is expensive.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Data Exploration}
 \textit{Data Exploration} can be defined as the process through which users
 formulate information needs over a dataset even when they do not know exactly
@@ -204,7 +300,7 @@ triggers the formulation of the next one, uncovering unkown or unanticipated
 insights in the data, letting information that is needed to emerge and evolve
 itself rather than being fully known in advance.  
 
-As stated in \cite{idreos2015overview}, traditional data management systems
+As stated in~\cite{idreos2015overview}, traditional data management systems
 assume that users, when posing a query, have a good knowledge of the data schema
 and that the query they provide leads to a result that is actually what they
 wanted, presupposing that the end user already knows what they are looking for.
