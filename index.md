@@ -9,12 +9,6 @@
 
 <!-- BACKGROUND -->
 ## 2. Background
-### Data Exploration
-<!-- How data exploration is made usually. Current situation to face client requests. -->
-### Distributed Data Systems
-<!-- Explain current situation, high loads leads to distribution, but distribution
-inevitally comes with this. -->
-### Microservices
 ### Heterogeneous Data Sources
 <!-- Not only distributed, but potentially different technologies to suite specific 
 requirements. -->
@@ -25,6 +19,9 @@ value comes from data for a lot of companies.
 + agostic schema query advantages / avoid leakeages-->
 ### Federate Query Processing
 <!-- Consequences of distributed processing: we require aggregation -->
+### Microservices
+### Data Exploration
+<!-- How data exploration is made usually. Current situation to face client requests. -->
 ### Existing Solutions
 <!-- Comparision with other technologies. -->
 
