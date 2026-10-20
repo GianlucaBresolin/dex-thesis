@@ -1,16 +1,21 @@
-\chapter{Introduction}
-\label{chap:introduction}
-
+\chapter{Introduction}\label{chap:introduction}
 
 \section{Inkwell Data Ltd}
-This thesis project was carried out at \textit{Inkwell Data Ltd}, a company
-% add 6 months stage for MSc Computer Science
-operating in the \textit{Industrial Internet of Things} (\textit{IIoT}) sector,
-specializing in connectivity solutions and digital-twin technologies for
-industrial assets. In this context, a digital twin is understood as a dynamic
-digital representation of a physical device and its software representation,
-continuously connected to the corresponding real-world object for data exchange
-thoughout its lifecycle.  
+This thesis project was carried out during a six-month internship at
+\textit{Inkwell Data Ltd}, as part of the \textit{Master's Degree} program in
+\textit{Computer Science} at the \textit{University of Padua}.  
+\textit{Inkwell Data Ltd} a company operating in the \textit{Industrial
+Internet of Things} (\textit{IIoT}) sector, specializing in connectivity
+solutions and digital-twin technologies for industrial assets.\\
+The concept of digital twin was first envisioned in 1991, although the term
+\textit{'digital twin'} was officially used in 2010 by the
+\textit{NASA}~\cite{glaessgen2012digital} and has, since then, become widely
+adopted across many industries. In the context of this thesis, a \textit{digital
+twin} is understood as a digital model of a physical object and its associated
+processes and systems, which needs to dynamically reflect the state of the
+real-world object it represents by being continuously connected to it for data
+exchange throughout its lifecycle.  
+
 Founded in 2019, with teams interconnecting London and Padua, the company
 started with \textit{Altior}, a middleware \textit{Platform as a Service}
 (\textit{PaaS}) designed to simplify the creation and management of digital
@@ -19,102 +24,175 @@ twins at an enterprise scale.
 \begin{figure}[H]
       \centering
       \includegraphics[alt={Logo \textit{Inkwell Data Ltd.}}, width=0.25\columnwidth]{img/inkwell_data_logo.jpeg}
-      \caption{\textit{Inkwell Data Ltd} logo}
-      \label{fig:inkwelldata}
+      \caption{\textit{Inkwell Data Ltd} logo}\label{fig:inkwelldata}
 \end{figure}
 
 At the core of \textit{Altior}, device twin instances are treated as data
 structures reflecting the current state of the corresponding real-world object,
 allowing the platform to remain highly responsive even under heavy load. Rather
 than focusing on the mere collection of data, \textit{Altior} places particular
-emphasis on how this data flows and is processed once collected, for instance by
-publishing device updates onto message queues for downstream consumption. This
-% avoid use of instance and provide more exaples
-focus on data flow is further supported by \textit{Altior}'s distributed nature:
-% remove further supported, just say distributed logic
-the platform can be transparently replicated and clustered across multiple
-% remove transparently replicated, add horizontal and vertical section of white papers
-interconnected servers, providing horizontal scalability, load balancing and
-fault tolerance, all while maintaining a strong emphasis on security.
+emphasis on how this data flows and is processed once collected, keeping the
+digital instance of the device up to date with the state inferred from the
+received data.  
 
-On top of the Altior platform, Inkwell Data develops \textit{Software as a
-Service} (\textit{SaaS}) applications tailored to specific industrial
-domains. One such application is \textit{Swarm}, a product built on Altior
-and primarily focused on the water metering sector, although the company's
-technology is designed to generalize to a broader range of connected
-industrial devices.
+This focus on data flow is achieved by design: \textit{Altior} is architected
+as a strongly distributed system. The platform supports vertical scaling, by
+allocating additional resources to the running system, as well as horizontal
+scaling, as its runtime environment can be transparently replicated across
+one or more servers within a cluster, providing load balancing and fault
+tolerance, all while maintaining a strong emphasis on security. 
 
-% add swarm organizations in elixir apps
+On top of the \textit{Altior} platform, \textit{Inkwell Data Ltd} develops
+\textit{Software as a Service} (\textit{SaaS}) applications tailored to specific
+industrial domains. One such application is \textit{Swarm}, a product primarily
+focused on the water metering sector, although the company's technology is
+designed to generalize to a broader range of connected industrial devices.
+Following a design that reflects current trends in distributed systems,
+adopted to achieve independent scalability, fault isolation and logical
+decoupling between components, \textit{Swarm} is organized as an Elixir umbrella
+application, structured following microservices principles into a set of
+independent applications.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Context and Motivation}
-Over the last decades, the way in which software has been thought about has go  
+Historically, software systems were designed as monolithic applications
+deployed on a single server, where all components, business logic, and data
+access layers resided within a single process. This architecture simplified
+development and deployment but imposed intrinsic limitations: scalability was
+constrained to the vertical addition of resources to a single machine, and a
+failure in any component could compromise the availability of the entire
+system. The growing scale and availability requirements of modern software
+systems, together with a user base that is increasingly global rather than
+local, have made distributed architectures the standard way of building large
+applications. By partitioning computation and data across multiple
+interconnected nodes, these architectures make it possible to scale with the
+workload, to tolerate hardware and software failures and to serve geographically
+dispersed requests with acceptable response times.
+
+Among distributed architectures, \textit{microservices} have become one of the
+most widely adopted style: the application is decomposed into small, loosely
+coupled services, each responsible for a specific business capability and
+independently deployable and scalable. To preserve this independence, services
+commonly adopt the \textit{database per service} pattern, according to which
+each service owns its data and exposes it only through its own interface. Since
+every service is free to choose the storage technology best suited to its needs,
+the data of a single logical application ends up fragmented across multiple,
+independently managed, and often heterogeneous data sources, which differ in
+data model, query language, and storage technology. This fragmentation is not
+peculiar to microservices, but is a recurring characteristic of distributed
+systems in which data is spread across heterogeneous data sources, representing
+the context in which this thesis, with the design and implementation
+\textit{DEX}, operates. 
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Problem Statement and Objectives}
+The shift toward distributed architectures, most notably through the adoption of
+the \textit{database-per-service} pattern in microservices, inevitably leads to
+the fragmentation of application data across multiple, independently managed,
+and highly heterogeneous data sources. 
+
+This structural characteristic of distributed architectures particularly
+affects those who need to query the data of the system. The queries that an
+application can serve are, in general, those anticipated and implemented by its
+developers at design time. Any new information need that requires combining the
+data of several services or components in an unforeseen way cannot be satisfied
+without modifying and redeploying part of the system, which couples the agility
+of data access to the development lifecycle of the software. Even when direct
+access to the data sources is available, answering such a need remains costly:
+it requires knowledge of the different technologies and query languages adopted
+by each source, beyond the effort of aggregating the partial results retrieved
+from each of them into a coherent answer. 
+
+This limitation is amplified by the profile of the end users, who are not
+necessarily technical personnel able to operate with these technologies: they
+are often domain experts, who may be capable of delivering value from data while
+being unable to write queries in the languages of the underlying data sources.
+Whenever an ad-hoc query is needed, users must rely on the team responsible for
+the product to implement it on their behalf. When the data is spread across
+multiple components owned by different teams, the request may additionally
+require coordination among all of them. The result is a long delay between the
+formulation of an information need and its fulfillment, together with a
+recurring maintenance burden for the development teams, who are repeatedly asked
+to implement one-off queries outside the scope of the predefined interfaces of
+the system. 
+
+The objective of this thesis is to design and develop \textit{DEX}, a system
+that allows users to explore and query multiple heterogeneous and distributed
+data sources, without requiring modifications to the sources nor knowledge of
+the query language or technology adopted by each of them.
+In particular, this work pursues the following objectives. First, to define a
+uniform query interface that abstracts over the heterogeneity of the data
+sources, so that information needs can be expressed without knowing where or how
+the relevant data is stored. Second, to support \textit{data exploration},
+allowing users to approach the data iteratively, starting from a broad question
+and progressively refining it through successive queries, without having to know
+in advance exactly which data they need. Third, to provide a layer of
+\textit{data abstraction and governance}: users interact with a logical model
+that decouples them from the physical schema of each source, and, since every
+query is mediated by the system, access policies can be defined once, at the
+level of this model, enforcing uniformly across all the underlying sources,
+regardless of how each of them manages its own permissions. Fourth, to design a
+distributed architecture implementing \textit{federated query processing}, able
+to decompose a single logical query into subqueries executable against the
+individual data sources, and to reconcile their partial results into a coherent
+response. Fifth, to ensure that adding a new data source, or changing an
+existing one, limits the need for new development to what is strictly necessary,
+relying as much as possible on configuration. Finally, to evaluate the system in
+terms of performance and scalability, in order to assess its viability for
+querying data distributed across heterogeneous data sources, such as those found
+in microservices architectures. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Thesis Structure}
-% Completely to be remade
-This thesis is organized into seven chapters, covering the background,
-requirements, architecture, implementation, and evaluation of DEX.
+This thesis is organized into seven chapters. The background, the
+requirements and design goals guiding the development of the framework are
+covered first, followed by the architecture and implementation of \textit{DEX}.
+The system is then evaluated, with the thesis concluding with the main 
+contributions and some possible directions for future work. The chapters are 
+organized as detailed below: 
 
 \begin{description}
-      \item[\textbf{Chapter 2}] provides the background required to understand
-      the project. It introduces data exploration, distributed data systems,
-      heterogeneous data sources, data abstraction and governance, and
-      distributed query processing. The chapter concludes with an overview of
-      existing solutions and technologies related to the presented problem.
+      \item[{\hyperref[chap:background]{\textbf{Chapter 2}}}] provides the
+      background required to understand the project. It introduces data
+      exploration, distributed system concepts, heterogeneous data sources, data
+      abstractions, data governance and distributed query processing. The chapter
+      concludes with an overview of existing solutions and technologies related
+      to the presented problem; 
       \item[\textbf{Chapter 3}] describes the requirements and design goals of
-      DEX. It defines the functional requirements, quality requirements, and
-      constraints that guided the development of the system.
-      \item[\textbf{Chapter 4}] presents the architecture of DEX. It first
-      provides an overview of the system and its main architectural principles,
-      and then describes its adoption of the Hexagonal Architecture. The chapter
-      also discusses distributed execution, fault tolerance, and the application
-      of microservice principles within the BEAM environment.
-      \item[\textbf{Chapter 5}] describes the implementation of DEX. It
+      \textit{DEX}. It defines the functional requirements, quality
+      requirements, and constraints that guided the development of the system;
+      \item[\textbf{Chapter 4}] presents the architecture of \textit{DEX}. It
+      first provides an overview of the system and its main architectural
+      principles, and then describes its adoption of the \textit{Hexagonal
+      Architecture}. The chapter also discusses distributed execution, fault
+      tolerance, and the application of microservice principles within the
+      \textit{BEAM} environment; 
+      \item[\textbf{Chapter 5}] describes the implementation of \textit{DEX}. It 
       introduces the main technologies adopted by the system and details the
       implementation of query processing, data source integration, persistence,
-      configuration, and client interaction. The chapter also discusses the
-      concrete mechanisms used to provide fault tolerance.
+      configuration, and client interactions. The chapter also discusses the
+      concrete mechanisms used to provide fault tolerance;
       \item[\textbf{Chapter 6}] evaluates the developed system. It describes the
       experimental setup and presents the results of the performance and
       scalability evaluations. The obtained results are subsequently discussed
-      to assess the behavior of DEX under the considered experimental
-      conditions.
+      to assess the behavior of \textit{DEX} under the considered experimental
+      conditions;
       \item[\textbf{Chapter 7}] concludes the thesis by summarizing the main
       contributions of the project and discussing its current limitations. The
       chapter concludes by presenting possible directions for future
       development.
-
-% In merito alla stesura del testo, all'interno del presente documento sono state adottate le seguenti convenzioni tipografiche:
-% \begin{itemize}
-%       \item gli acronimi, le abbreviazioni e i termini ambigui o di uso non comune menzionati vengono definiti nel glossario;
-%       \item per la prima occorrenza dei termini riportati nel glossario viene utilizzata la seguente nomenclatura: \textit{parola}\glox\gloxspacing;
-%       \item i termini facenti parti del gergo tecnico sono evidenziati con il carattere \textit{corsivo}.
-% \end{itemize}
 \end{description}
 
-% \section{Organizzazione del testo}
-% Nel presente capitolo viene presentata l'introduzione della tesi, fornendo una panoramica sull'azienda, sul contesto applicativo,
-% sul progetto, sugli strumenti utilizzati e sul prodotto portato a termine durante lo svolgimento dello stage. \newline
-% In seguito il documento presenterà la seguente organizzazione:
-
-% \begin{description}
-%       \item Il {\hyperref[chap:analisi-requisiti]{Capitolo 2}} descrive la fase di analisi dei requisiti che è stata
-%             svolta dall'azienda in fase antecedente all'inizio dell'attività di stage, in modo da permettere una comprensione più profonda
-%             di quelle che sono le necessità da soddisfare e gli obiettivi da raggiungere all'interno di questo progetto;
-
-%       \item Il {\hyperref[chap:progettazione]{Capitolo 3}} illustra l'attività di progettazione che è stata svolta in vista dell'implementazione
-%             dei grafici prodotti, definendo e individuando le soluzioni implementative che sono state attuate durante la successiva attività di codifica;
-
-%       \item Il {\hyperref[chap:realizzazione-testing]{Capitolo 4}} approfondisce l'attività di codifica delle componenti grafiche presentate
-%             all'interno della libreria implementata e dei relativi test effettuati per garantire la qualità e la funzionalità del prodotto finale;
-
-%       \item Il {\hyperref[chap:rilascio]{Capitolo 5}} descrive l'attività di rilascio dell'SDK realizzato, presentando le modalità di integrazione
-%             all'interno di un prodotto \textit{Datasoil S.r.l.};
-
-%       \item Il {\hyperref[chap:conclusioni]{Capitolo 6}} presenta un epilogo del progetto svolto, includendo un consuntivo finale delle attività svolte,
-%             una valutazione del progetto e una sezione dedicata ai possibili sviluppi futuri del prodotto.
-%             La sezione infine si conclude con una riflessione finale sull'esperienza di stage svolta.
-% \end{description}
-
+Regarding adopted writing conventions, the following typographic rules are used
+within this document:
+\begin{itemize}
+      \item acronyms, abbreviations, and ambiguous or uncommon terms are
+      defined in the glossary;
+      \item the first occurrence of a term listed in the glossary follows this
+      notation: \textit{word}\glox\gloxspacing;
+      \item terms belonging to technical jargon are highlighted in
+      \textit{italics}.
+\end{itemize}
