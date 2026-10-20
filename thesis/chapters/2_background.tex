@@ -1,5 +1,173 @@
 \chapter{Background}\label{chap:background}
 
+\section{Microservices}
+The adoption of distributed architectures has been driven by a combination of
+needs: the ability to scale to sustain growning workloads, fault tolerance in
+the presence of hardware and/or software failures, and, with software products
+increasingly reaching a global rathen than local user base, the ability to serve
+geographically dispersed requests with acceptable response times. \\
+A single server running a monolithic application, with all components,
+business logic and data access layers residing within a single process, is a
+solution which is unable to satisfy these needs beyond a certain scale. Any
+concurrency it is able to offer remains bounded by the capacity of that single
+machine, which constitutes both a bottleneck and a single point of failure,
+potentially compromising the availability of the entire system. Moreover, being
+tied to a fixed physical location, it is unable to satisfy strict latency
+requirements for all users.\\
+In this context, sustaining higher workloads requires to scale vertically, by
+adding more powerful or additional components, but this infrastructural approach
+tends to incur into costs which grow exponentially in relation to the amount of
+load that the system is able to support, making it an unsustainable choice for
+lage-scale data and user applications.\\ 
+
+The natural step was to scale horizzontally, distributing the workloads across
+multiple, independent and typically less expensive machines rather than
+concentrating it on a single, powerful and costly one. However, just replicating
+a monolithic application across several nodes, doesnn't solve all the previous
+problems: a software or hardare failure will potentially cause sessions or
+application state issues. Moreover, different monoliths will still point to the
+same database, becoming a single point of failure and a performance bottleneck.
+Finally, application logic components are replicated equally, even if they
+might require different scalability dynamics, leading to an unefficient use of
+the available resources. 
+
+A further limitation of the monolith concerns the isolation among its parts:
+monoliths are commonly associated with the informal expression \textit{big ball
+of mud} due to the absence of clear boundaries among their components. Indeed,
+their dependencies are complex and tangled, leading to a codebase which is hard
+to understand and to modify. A possible way to introduce isolation is the
+\textit{Service Oriented Architecture} (SOA)~\cite{erl2005service}, in which the
+application is divided into \textit{services} that do not share a database. Each
+service has its own, possibly of a different type, so that no coupling exists
+between the databases and the different parts of the application. However, all
+access to a service must go through the API it exposes, under a centralized
+communication middleware: as a consequence, the middleware and the API services
+may become bottlenecks that limit the scalability of the system, undermining the
+benefits of the isolation introduced by the separation of contexts. 
+
+The \textit{microservices} architecture emerges as a response to the limitations
+of both the monolith and SOA, of which it can be regarded as a refinement,
+retaining the principle of dividing an application into services with their own
+data. Instead of replicating a monolith as a whole, the application is
+decomposed into a set of small, independently deployable services, each
+responsible for a specific business capability. Rather than routing all
+communication through a centralized middleware, services interact through
+lightweight messages exchanged directly over the network, so that no single
+component constrains the scalability of the whole system. Moreover, the
+separation is not only logical but also physical: each service owns its data
+store and can run on different machines in a different number of copies. Each
+service can therefore be scaled, updated, and recovered independently of the
+rest of the system, so that components subject to higher load are replicated
+accordingly to their scalability needs, and the failure of a single service does
+not necessarily compromise the whole application. \\
+
+The microservices architectural style can therefore be characterized along four
+dimensions of isolation that loosely coupled, independently deployable
+services aim to achieve. \textit{Isolation of state} is ensured by each
+microservice owning and managing its own data, with no shared, mutable state
+accessible to other services. \textit{Isolation of space} follows from
+services being physically separable and independently deployable, allowing
+each one to be scaled on its own, potentially running one or more instances
+across different machines. \textit{Isolation of time}, together with
+\textit{isolation of failure}, stems from communication between services
+typically being asynchronous, decoupling the lifecycle of a request from the
+availability of the services involved and from failures being contained
+within the boundaries of the service in which they occur, increasing the
+overall availability of the system.
+
+Adopting this architecture, however, does not by itself determine how an
+application should be divided: a microservice is not a unit of size, but rather
+a unit of functionality. For this reason, the microservice
+\textit{responsibility} guides the design of the system, follwing the
+\textit{single responsibility principle}, originally stated for object-oriented
+classes: a class should have only one reason to change. The same principle
+applies to microservices, so that a change to the internals of one does not 
+necessitate a change to another. A good starting point for identifying such
+responsibilities comes from \textit{Domain-Driven Design}
+(DDD)~\cite{evans2004domain}, an approach that centers the design of software on
+the model of the business domain. Within DDD, a \textit{bounded context} defines
+the context in which a specific model applies, with its own terminology and rules. 
+
+Once the boundaries of the services have been defined, the way they behave at
+runtime becomes the main concern. The goals pursued by this architecture are
+software that scales, consumes only the resources necessary to support the
+current load, handles failures with little or no effect on the user, and is
+distributed across machines, while maintaining a consistent level of quality and
+responsiveness despite all of these aspects. These goals are formalized by the
+\textit{Reactive Manifesto}~\cite{reactive-manifesto}, which defines a
+\textit{reactive system} through the following four principles
+\begin{itemize}
+    \item \textbf{Responsive}: the system responds in a timely fashion, thereby
+    building user confidence. 
+    \item \textbf{Resilient}: the system remains responsive even when failures
+    occur. By leveraging replication, isolation, containment and delegation,
+    failures are confined to a single component without propagating throughout
+    the system, while recovery is delegated to an external component. 
+    \item \textbf{Elastic}: the system maintains responsiveness despite
+    fluctuations in workload. This behavior relies on the absence of contention
+    and central bottlenecks, allowing the system to scale up during demand peaks
+    to ensure responsiveness and scale down to maximize cost effectiveness,
+    often supported by predictive auto-scaling techniques. 
+    \item \textbf{Message-driven}: the system relies on asynchronous,
+    non-blocking message passing, which establishes loose coupling, isolation
+    and location transparency. Consequently, resources are consumed only while
+    active, preventing components from remaining blocked since responses are
+    also delivered asynchronously. 
+\end{itemize}
+These four principles are deeply interconnected. The message-driven nature of
+the system serves as the foundation upon which the others rest: asynchronous
+messages decouple components and grant location transparency, enabling seamless
+replication across distributed nodes. Consequently, the system achieves
+resilience and handles dynamic operational loads by scaling components up or
+down according to current demand, thereby attaining elasticity. Resilience and
+elasticity, in turn, sustain system responsiveness. When implemented using
+event-driven communication and decentralized data management, microservices
+naturally align with this vision, embodying the core properties required by a
+reactive system. \\
+
+Microservices are characterized by independent deployment, multiple
+independent databases and loose coupling between components, with communication
+that can be either synchronous or asynchronous. Deployment is rapid, possibly
+continuous and teams release features when they are ready. These
+characteristics are usually accompanied by an organizational change: teams,
+often organized around a \textit{DevOps} approach, operate more independently,
+release cycles become shorter and cross-team coordination is less necessary,
+which can increase productivity. Isolation and decoupling also give each team
+more flexibility in evolving the internals of its service, and allow multiple
+platforms and languages to coexist within the same system.
+
+These benefits come at a cost: deployment and monitoring may require multiple
+and complex approaches~\cite{faseeha2025observability}, while refactoring across
+services is more challenging than in a monolith, since a change that spans
+several services must be coordinated among different teams. The reason behind
+this resides in the fact that the complexity that was inside the monolith is now
+moved outside the single services, in the coordination among them. As a
+consequence, the overall system architecture becomes more complex and a single
+request may require information from several services, with the client needing
+to know which services exist, who provides what and how to reach them. This
+problem is addressed by the introduction of \textit{gateway services}, which
+have the role of aggregating requests and responses from multiple services,
+hiding the complexity of the architecture from the client. Consequently, service
+management becomes a major operational challenge, particularly concerning data
+governance: while service independence allows adoption of heterogeneous
+technologies tailored to specific domain requirements, it introduces a loss of a
+holistic system view, leading to data fragmentation across disparate data
+sources. \\
+
+In this context, gateway services typically act as an implementation of the
+\textit{facade pattern}~\cite{gamma1994design}, providing a unified and
+simplified interface over a set of underlying microservices to obscure system
+complexity. However, whenever new data requirements arise, this traditional
+approach forces codebase changes on the gateway services and therefore the
+following deployment of new versions, introducing operational risks and
+potential bugs. To overcome these limitations, \textit{DEX} abstracts the core
+tenets of the facade pattern into a fully configuration-driven architecture:
+rather than modifying source code, new data aggregation logic and service
+integrations are declared through configuration files, thereby adhering to the
+principle of code reuse and mitigating software regression risks. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Heterogeneous Data Sources}\label{sec:heterogeneous-data-sources}
 An increasing number of modern software systems rely on \textit{distributed
 database systems}, which can be defined as an integration of autonomous local
@@ -437,7 +605,7 @@ incrementally, without having to rewrite the whole query from scratch at every
 step, and lets users build their understanding of the data step by step.
 
 Among the tools considered, \textit{Metabase} and \textit{FedX}
-\cite{schwarte2011fedx} are the closest point of comparison. 
+~\cite{schwarte2011fedx} are the closest point of comparison. 
 \textit{Metabase} exposes the schemas of connected databases to end users, allowing
 them to interact with their data through a \textit{no-code} interface, without
 explicitly writing query code. However, \textit{Metabase} operates directly on
