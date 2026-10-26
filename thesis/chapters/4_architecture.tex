@@ -1,0 +1,38 @@
+\chapter{System Design and Architecture}
+
+\section{System Overview}
+
+\textit{DEX} is designed as a distributed framework intended to provide a
+unified logical view over heterogeneous and distributed data sources, accessed
+strictly in read-only mode. The framework adopts a federated query processing
+strategy: queries are formulated over the logical model defined above the
+concrete schemas of the underlying databases, providing a layer of abstraction
+that hides how data is physically stored and structured. Those queries are then
+decomposed into subqueries executed against the underlying sources, and
+subsequently resolved by aggregating partial results. By structuring
+\textit{DEX} as a distributed system, subquery execution is carried out in
+parallel, thereby maximizing throughput and maintaining system responsiveness. 
+
+User interaction with \textit{DEX} is mediated by a graphical interface that
+enables the construction of queries over the logical model through visual
+filters, eliminating the need for explicit query coding. Upon formulation, the
+system translates the global query into localized subqueries and orchestrates
+their execution. Each subquery is assigned to an individual worker process
+targeting a specific data source, while partial results converge at a central
+logical point for final aggregation once all responses are received.
+Furthermore, secondary reduction operations, such as summations, averages, and
+counts, can be applied directly to the aggregated dataset. 
+
+To mitigate the computational overhead associated with unexpected failures, the
+design incorporates systemic fault tolerance alongside caching mechanisms.
+Operating under the premise that network disruptions and component crashes are
+inherent to distributed environments, the architecture is structured to preserve
+partial execution progress and isolate recovery strictly to failing entities,
+avoiding when is possible the redundant re-execution of the global workload,
+optimizing resource utilization and sustaining operational efficiency.  
+
+Ultimately, this design encapsulates the complexities of data distribution,
+source heterogeneity, execution orchestration and fault recovery. From the user
+perspective, the entire execution pipeline is exposed as a single, seamless
+operation abstracting the underlying distributed execution offered by
+\textit{DEX}. 
